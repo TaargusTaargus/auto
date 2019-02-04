@@ -23,7 +23,7 @@ START_TEXT = "Start"
 STOP_TEXT = "Stop"
 PLAYBACK_TEXT = "Playing recording ..."
 RECORDING_TEXT = "Recording ..."
-POST_RECORDING_TEXT = "Unsaved recording is loaded ..."
+POST_RECORDING_TEXT = "Unsaved recording loaded."
 
 class Ui_Form( object ):
 
@@ -105,6 +105,9 @@ class Presenter( object ):
     self.view = view
 
   def init_ui( self ):
+    self.click.start()
+    self.tap.start()
+    self.view.get_create_new_button().clicked.connect( self.on_create_new_button_click )
     self.view.get_open_button().clicked.connect( self.on_open_button_click )
     self.view.get_save_as_button().clicked.connect( self.on_save_as_button_click )
     self.view.get_start_stop_button().clicked.connect( self.on_start_stop_button_click )
@@ -120,7 +123,7 @@ class Presenter( object ):
         self.click.disable()
         self.tap.disable()
         self.view.get_status_label().setText( _translate( "Form", POST_RECORDING_TEXT, None ) )
-        self.recording = "recording"
+        self.recording = "Unsaved recording"
 
       self.view.get_create_new_button().show()
       self.view.get_open_button().show()
@@ -131,6 +134,7 @@ class Presenter( object ):
     else:
 
       if self.recording:
+        self.controller.tasks = self.recorder.tasks  
         self.controller.start()
         self.view.get_status_label().setText( _translate( "Form", "Running " + self.recording + " ...", None ) ) 
       else:
@@ -142,6 +146,12 @@ class Presenter( object ):
       self.view.get_start_stop_button().setText( _translate( "Form", STOP_TEXT, None ) )
 
     self.isrunning = not self.isrunning
+
+  def on_create_new_button_click( self ):
+    self.recording = None
+    self.view.get_create_new_button().hide()
+    self.view.get_save_as_button().hide()
+    self.view.get_status_label().setText( _translate( "Form", EMPTY_TEXT, None ) )
 
   def on_open_button_click( self ):
     filename = self.view.get_open_dialog()

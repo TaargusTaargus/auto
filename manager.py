@@ -13,7 +13,6 @@ class ClickManager( PyMouseEvent ):
     self.enabled = False
 
   def enable( self ):
-    self.start()
     self.enabled = True
 
   def click( self, x, y, button, pressed ):    
@@ -72,6 +71,7 @@ SAVE RECORDING = `
       self.record = not self.record
       if self.record:
         self.mouse = ClickManager( self.recorder )
+        self.mouse.start()
         self.mouse.enable()
       else:
         self.snapshot = self.recorder.get_snapshot()
@@ -89,7 +89,6 @@ class GuiTapManager ( PyKeyboardEvent ):
     self.enabled = False
 
   def enable( self ):
-    self.start()
     self.enabled = True
 
   def tap( self, code, char, press ):
