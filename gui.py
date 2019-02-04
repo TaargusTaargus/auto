@@ -1,6 +1,6 @@
-from PyQt4 import QtCore, QtGui
-from auto import Controller, TapManager
+from manager import GuiTapManager
 from os.path import expanduser
+from PyQt4 import QtCore, QtGui
 
 try:
   _fromUtf8 = QtCore.QString.fromUtf8
@@ -90,8 +90,7 @@ class Ui_Form( object ):
 class Presenter( object ):
 
   def __init__( self, view ):
-    self.controller = Controller()
-    self.manager = TapManager()
+    self.manager = GuiTapManager()
     self.isrunning = False
     self.view = view
 
@@ -124,19 +123,4 @@ class Presenter( object ):
   def on_save_as_button_click( self ):
     self.view.get_save_dialog()
 
-
-
-if __name__ == "__main__":
-  import sys
-  app = QtGui.QApplication( sys.argv )
-  form = QtGui.QWidget()
-  ui = Ui_Form()
-  ui.setup_ui( form )
-
-  presenter = Presenter( ui )
-  presenter.init_ui()
-
-  form.show()
-
-  sys.exit( app.exec_() )
 
