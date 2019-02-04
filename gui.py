@@ -1,6 +1,6 @@
-from event import EventRecorder
+from event import EventController, EventRecorder
 from manager import ClickManager, GuiTapManager
-from os.path import expanduser
+from os.path import expanduser, relpath
 from PyQt4 import QtCore, QtGui
 
 try:
@@ -17,9 +17,13 @@ except AttributeError:
   def _translate( context, text, disambig ):
     return QtGui.QApplication.translate( context, text, disambig )
 
+EMPTY_TEXT = "No recording is loaded."
 HOME_DIRECTORY = expanduser( "~" )
 START_TEXT = "Start"
 STOP_TEXT = "Stop"
+PLAYBACK_TEXT = "Playing recording ..."
+RECORDING_TEXT = "Recording ..."
+POST_RECORDING_TEXT = "Unsaved recording is loaded ..."
 
 class Ui_Form( object ):
 
@@ -55,9 +59,11 @@ class Ui_Form( object ):
   def retranslate_ui( self, Form ):
     Form.setWindowTitle( _translate( "Form", "Auto Man", None ) )
     self.startStopButton.setText( _translate( "Form", START_TEXT, None ) )
+    self.statusLabel.setText( _translate( "Form", EMPTY_TEXT, None ) )
     self.createNewButton.setText( _translate( "Form", "Create New", None ) )
     self.openButton.setText( _translate( "Form", "Open ...", None ) )
     self.saveAsButton.setText( _translate( "Form", "Save as ...", None ) )
+    self.createNewButton.hide()
     self.saveAsButton.hide()
 
   def get_bottom_horizontal_layout( self ):
@@ -91,9 +97,11 @@ class Ui_Form( object ):
 class Presenter( object ):
 
   def __init__( self, view ):
+    self.controller = EventController()
     self.recorder = EventRecorder()
     self.click, self.tap = ClickManager( self.recorder ), GuiTapManager( self.recorder )
     self.isrunning = False
+    self.recording = None
     self.view = view
 
   def init_ui( self ):
@@ -103,28 +111,49 @@ class Presenter( object ):
 
   def on_start_stop_button_click( self ):
     if self.isrunning:
-      self.click.stop()
-      self.tap.stop()
+
+      if self.recording:
+        self.controller.switch()
+        self.controller = EventController( self.controller.tasks )
+        self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
+      else:
+        self.click.disable()
+        self.tap.disable()
+        self.view.get_status_label().setText( _translate( "Form", POST_RECORDING_TEXT, None ) )
+        self.recording = "recording"
+
       self.view.get_create_new_button().show()
       self.view.get_open_button().show()
       self.view.get_save_as_button().show()
       self.view.get_parent_form().resize( 372, 126 )
-      self.view.get_start_stop_button().setText( START_TEXT )
+      self.view.get_start_stop_button().setText( _translate( "Form", START_TEXT, None ) )      
+
     else:
-      self.tap.start()
-      self.click.start()
-      self.view.get_create_new_button().hide()
-      self.view.get_open_button().hide()
-      self.view.get_save_as_button().hide()
+
+      if self.recording:
+        self.controller.start()
+        self.view.get_status_label().setText( _translate( "Form", "Running " + self.recording + " ...", None ) ) 
+      else:
+        self.tap.enable()
+        self.click.enable()
+        self.view.get_status_label().setText( _translate( "Form", RECORDING_TEXT, None ) ) 
+
       self.view.get_parent_form().resize( 372, 58 )
-      self.view.get_start_stop_button().setText( STOP_TEXT )
+      self.view.get_start_stop_button().setText( _translate( "Form", STOP_TEXT, None ) )
 
     self.isrunning = not self.isrunning
 
   def on_open_button_click( self ):
-    self.view.get_open_dialog()
-
+    filename = self.view.get_open_dialog()
+    if filename:
+      self.controller.load_auto_file( filename )
+      self.recording = relpath( filename )
+      self.view.get_create_new_button().show()
+      self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
+      
   def on_save_as_button_click( self ):
-    self.view.get_save_dialog()
-
-
+    filename = self.view.get_save_dialog()
+    if filename:
+      self.recording = relpath( filename )
+      self.recorder.save( filename )
+      self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )

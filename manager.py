@@ -6,10 +6,18 @@ class ClickManager( PyMouseEvent ):
 
   def __init__( self, recorder ):
     PyMouseEvent.__init__( self )
+    self.enabled = True
     self.recorder = recorder
 
+  def disable( self ):
+    self.enabled = False
+
+  def enable( self ):
+    self.start()
+    self.enabled = True
+
   def click( self, x, y, button, pressed ):    
-    if pressed:
+    if pressed and self.enabled:
       self.recorder.record( ClickEvent( x, y, button ) )
 
 
@@ -64,7 +72,7 @@ SAVE RECORDING = `
       self.record = not self.record
       if self.record:
         self.mouse = ClickManager( self.recorder )
-        self.mouse.start()
+        self.mouse.enable()
       else:
         self.snapshot = self.recorder.get_snapshot()
         self.control = EventController( self.snapshot )
@@ -74,7 +82,16 @@ class GuiTapManager ( PyKeyboardEvent ):
 
   def __init__( self, recorder ):
     PyKeyboardEvent.__init__( self )
+    self.enabled = False
     self.recorder = recorder
 
+  def disable( self ):
+    self.enabled = False
+
+  def enable( self ):
+    self.start()
+    self.enabled = True
+
   def tap( self, code, char, press ):
-    self.recorder.record( TapEvent( char, int( press ) ) )
+    if self.enabled:
+      self.recorder.record( TapEvent( char, int( press ) ) )
