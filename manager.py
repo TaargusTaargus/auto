@@ -1,20 +1,18 @@
-from event import TapEvent, EventController, EventRecorder
+from event import ClickEvent, TapEvent, EventController, EventRecorder
 from pymouse import PyMouseEvent
 from pykeyboard import PyKeyboardEvent
 
-class ClickManager ( PyMouseEvent ):
+class ClickManager( PyMouseEvent ):
 
   def __init__( self, recorder ):
     PyMouseEvent.__init__( self )
     self.recorder = recorder
-
 
   def click( self, x, y, button, pressed ):    
     if pressed:
       self.recorder.record( ClickEvent( x, y, button ) )
 
 
- 
 class ShellTapManager ( PyKeyboardEvent ):
  
   LOAD = 23 ## tab
@@ -37,7 +35,7 @@ SAVE RECORDING = `
     self.snapshot = None
     self.mouse = None
     self.control = None
-    self.recorder = EventEventRecorder()
+    self.recorder = EventRecorder()
 
 
   def tap( self, code, char, press ):
@@ -46,7 +44,7 @@ SAVE RECORDING = `
         self.recorder.save( "recording.auto" )
 
       if code == self.LOAD and not press:
-        self.control = EventEventController()
+        self.control = EventController()
         self.control.load_auto_file( "recording.auto" )
 
       if code == self.PLAY and not press and self.control:
@@ -55,7 +53,7 @@ SAVE RECORDING = `
           self.play = False
         else: 
           self.control.switch()
-          self.control = EventEventController( self.control.scheme )
+          self.control = EventController( self.control.scheme )
           self.play = True
 
     else:
@@ -69,20 +67,14 @@ SAVE RECORDING = `
         self.mouse.start()
       else:
         self.snapshot = self.recorder.get_snapshot()
-        self.control = EventEventController( self.snapshot )
+        self.control = EventController( self.snapshot )
 
 
-class GuiTapManager (PyKeyboardEvent):
+class GuiTapManager ( PyKeyboardEvent ):
 
-  def __init__( self ):
+  def __init__( self, recorder ):
     PyKeyboardEvent.__init__( self )
-    self.record = False
-    self.play = True
-    self.snapshot = None
-    self.mouse = None
-    self.control = None
-    self.recorder = EventRecorder()
-
+    self.recorder = recorder
 
   def tap( self, code, char, press ):
-    print( char )
+    self.recorder.record( TapEvent( char, int( press ) ) )

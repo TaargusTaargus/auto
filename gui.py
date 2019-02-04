@@ -1,4 +1,5 @@
-from manager import GuiTapManager
+from event import EventRecorder
+from manager import ClickManager, GuiTapManager
 from os.path import expanduser
 from PyQt4 import QtCore, QtGui
 
@@ -90,7 +91,8 @@ class Ui_Form( object ):
 class Presenter( object ):
 
   def __init__( self, view ):
-    self.manager = GuiTapManager()
+    self.recorder = EventRecorder()
+    self.click, self.tap = ClickManager( self.recorder ), GuiTapManager( self.recorder )
     self.isrunning = False
     self.view = view
 
@@ -101,14 +103,16 @@ class Presenter( object ):
 
   def on_start_stop_button_click( self ):
     if self.isrunning:
-      #self.manager.stop()
+      self.click.stop()
+      self.tap.stop()
       self.view.get_create_new_button().show()
       self.view.get_open_button().show()
       self.view.get_save_as_button().show()
       self.view.get_parent_form().resize( 372, 126 )
       self.view.get_start_stop_button().setText( START_TEXT )
     else:
-      #self.manager.run()
+      self.tap.start()
+      self.click.start()
       self.view.get_create_new_button().hide()
       self.view.get_open_button().hide()
       self.view.get_save_as_button().hide()
