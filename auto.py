@@ -3,11 +3,11 @@ from pymouse import PyMouseEvent
 from pykeyboard import PyKeyboardEvent
 from time import time, sleep
 from threading import Thread
-from sys import argv
 import ctypes
 
-START_MASTER_SERVICE = "start"
-READ_TEXT_FILE = "read"
+GUI_MODE = "gui"
+SHELL_MODE = "shell"
+READ_MODE = "read"
 
 class StringEvent:
 
@@ -81,7 +81,7 @@ class Controller (Thread):
 
   def load_auto_file( self, handle ): 
     self.tasks = []
-    fhandle = open( handle, "rb" )
+    fhandle = open( handle, "r" )
     for line in fhandle:
       attr = line.strip().split( "," )
       if attr[ 1 ] == "click":
@@ -144,7 +144,7 @@ class Recorder:
 
 
   def save( self, handle ):
-    fhandle = open( handle, "wb" )
+    fhandle = open( handle, "w" )
     for time, event in self.tasks:
       fhandle.write( ",".join( [ str( time ), event.to_string() ] ) + "\n" )
     fhandle.close()
@@ -203,13 +203,29 @@ class TapManager (PyKeyboardEvent):
 
 
 
-'''
-mode = argv[ 1 ]
-if mode == START_MASTER_SERVICE:
-  keyboard = TapManager()
-  keyboard.run()
-elif mode == READ_TEXT_FILE:
-  controller = Controller()
-  controller.load_text_file( argv[ 2 ] )
-  controller.run()
-'''
+if __name__ == "__main__":
+  from sys import argv
+  mode = argv[ 1 ]
+
+  if mode == GUI_MODE:
+    app = QtGui.QApplication( sys.argv )
+    form = QtGui.QWidget()
+    ui = Ui_Form()
+    ui.setup_ui( form )
+
+    presenter = Presenter( ui )
+    presenter.init_ui()
+
+    form.show()
+    sys.exit( app.exec_() )
+
+  elif mode == SHELL_MODE:
+    keyboard = TapManager()
+    keyboard.run()
+
+  elif mode == READ_MODE:
+    controller = Controller()
+    controller.load_text_file( argv[ 2 ] )
+    controller.run()
+
+

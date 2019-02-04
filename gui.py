@@ -23,7 +23,7 @@ STOP_TEXT = "Stop"
 class Ui_Form( object ):
 
   def setup_ui( self, form ):
-    form.setObjectName( _fromUtf8( "Form" ) )
+    form.setObjectName( _fromUtf8( "form" ) )
     form.resize( 372, 126 )
     self.form = form
     self.startStopButton = QtGui.QPushButton( form )
@@ -52,7 +52,7 @@ class Ui_Form( object ):
     QtCore.QMetaObject.connectSlotsByName( form )
 
   def retranslate_ui( self, Form ):
-    Form.setWindowTitle( _translate( "Form", "Form", None ) )
+    Form.setWindowTitle( _translate( "Form", "Auto Man", None ) )
     self.startStopButton.setText( _translate( "Form", START_TEXT, None ) )
     self.createNewButton.setText( _translate( "Form", "Create New", None ) )
     self.openButton.setText( _translate( "Form", "Open ...", None ) )
@@ -81,7 +81,10 @@ class Ui_Form( object ):
     return self.form
 
   def get_open_dialog( self ):
-    return QtGui.QFileDialog.getOpenFileName( self.form, "Open File", HOME_DIRECTORY, "Auto Files (*.auto)" )#, "Auto Files (*.auto)" )
+    return QtGui.QFileDialog.getOpenFileName( self.form, "Open File", HOME_DIRECTORY, "Auto Files (*.auto)" )
+
+  def get_save_dialog( self ):
+    return QtGui.QFileDialog.getSaveFileName( self.form, "Save File", HOME_DIRECTORY, "Auto Files (*.auto)" )
 
 
 class Presenter( object ):
@@ -94,6 +97,7 @@ class Presenter( object ):
 
   def init_ui( self ):
     self.view.get_open_button().clicked.connect( self.on_open_button_click )
+    self.view.get_save_as_button().clicked.connect( self.on_save_as_button_click )
     self.view.get_start_stop_button().clicked.connect( self.on_start_stop_button_click )
 
   def on_start_stop_button_click( self ):
@@ -116,6 +120,9 @@ class Presenter( object ):
 
   def on_open_button_click( self ):
     self.view.get_open_dialog()
+
+  def on_save_as_button_click( self ):
+    self.view.get_save_dialog()
 
 
 
