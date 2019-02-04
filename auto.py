@@ -91,32 +91,32 @@ class Controller (Thread):
     fhandle.close()
 
   def load_text_file( self, handle, size=70, interval=10 ):
-		self.tasks = []
-		string = ""
-		tmp = ""
-		fire = False
-		with open( handle ) as infile:
-			for line in infile:
-				if not line.strip():
-					tmp = string
-					string = ""
-					fire = True
+    self.tasks = []
+    string = ""
+    tmp = ""
+    fire = False
+    with open( handle ) as infile:
+      for line in infile:
+        if not line.strip():
+          tmp = string
+          string = ""
+          fire = True
 
-				string = string + line.strip()
-				if len( string ) > 70:
-					tmp = string[ :70 ]
-					if string[ 69 ] != " " and string[ 70 ] != " ":
-						tmp = " ".join( string.split( " " )[ :-1 ] )
-						string = string[ len( tmp ): ]
-					else:
-						string = string[ 70: ]
-					fire = True
+        string = string + line.strip()
+        if len( string ) > 70:
+          tmp = string[ :70 ]
+          if string[ 69 ] != " " and string[ 70 ] != " ":
+            tmp = " ".join( string.split( " " )[ :-1 ] )
+            string = string[ len( tmp ): ]
+          else:
+            string = string[ 70: ]
+          fire = True
  
-				if fire:
-					self.tasks.append( ( interval, StringEvent( tmp ) ) )
-					self.tasks.append( ( 0, TapEvent( "Enter", 1 ) ) )
-					self.tasks.append( ( 0, TapEvent( "Enter", 0 ) ) )
-					fire = False
+        if fire:
+          self.tasks.append( ( interval, StringEvent( tmp ) ) )
+          self.tasks.append( ( 0, TapEvent( "Enter", 1 ) ) )
+          self.tasks.append( ( 0, TapEvent( "Enter", 0 ) ) )
+          fire = False
 
 class ClickManager (PyMouseEvent):
 
@@ -158,9 +158,7 @@ class TapManager (PyKeyboardEvent):
   LOAD = 23 ## tab
   SAVE = 49 ## `
   RECORD = 50 ## R-Shift
-  PLAY = 62 ## L-Shift
-  
-
+  PLAY = 62 ## L-Shift 
  
   def __init__( self ):
     PyKeyboardEvent.__init__( self )
@@ -200,13 +198,12 @@ class TapManager (PyKeyboardEvent):
         self.mouse = ClickManager( self.recorder )
         self.mouse.start()
       else:
-        # stop doesnt work sso just recreating
         self.snapshot = self.recorder.get_snapshot()
         self.control = Controller( self.snapshot )
 
 
 
-
+'''
 mode = argv[ 1 ]
 if mode == START_MASTER_SERVICE:
   keyboard = TapManager()
@@ -215,4 +212,4 @@ elif mode == READ_TEXT_FILE:
   controller = Controller()
   controller.load_text_file( argv[ 2 ] )
   controller.run()
- 
+'''

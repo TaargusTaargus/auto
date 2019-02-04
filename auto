@@ -10,7 +10,7 @@ run the $SERVICE service in the background. To kill $SERVICE double tap the esca
 button.
 "
 else
-  pyth=$(which python)
+  pyth=$(which python3)
   if [ "x$pyth" == "x" ]; then
     echo "You do not have Python installed or it is not in your \$PATH"
   fi
