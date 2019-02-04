@@ -66,10 +66,8 @@ class EventController ( Thread ):
       event.consume()
       self.counter = ( self.counter + 1 ) % len( self.tasks )
 
-
   def switch( self ):
     self.running = not self.running
-
 
   def load_auto_file( self, handle ): 
     self.tasks = []
@@ -132,6 +130,4 @@ class EventRecorder:
 
   def get_snapshot( self ):
     return list( self.tasks )
-
-
 

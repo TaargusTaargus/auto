@@ -117,12 +117,13 @@ class Presenter( object ):
 
       if self.recording:
         self.controller.switch()
-        self.controller = EventController( self.controller.tasks )
+        self.controller = EventController( self.recorder.tasks )
         self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
       else:
         self.click.disable()
         self.tap.disable()
         self.view.get_status_label().setText( _translate( "Form", POST_RECORDING_TEXT, None ) )
+        self.controller = EventController( self.recorder.tasks )
         self.recording = "Unsaved recording"
 
       self.view.get_create_new_button().show()
@@ -134,7 +135,6 @@ class Presenter( object ):
     else:
 
       if self.recording:
-        self.controller.tasks = self.recorder.tasks  
         self.controller.start()
         self.view.get_status_label().setText( _translate( "Form", "Running " + self.recording + " ...", None ) ) 
       else:
