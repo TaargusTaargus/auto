@@ -1,4 +1,4 @@
-from event import ClickEvent, StringEvent, TapEvent, EventController, EventRecorder
+from event import EventController
 from manager import ShellTapManager
 from gui import Presenter, Ui_Form
 from PyQt4 import QtGui

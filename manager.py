@@ -1,6 +1,30 @@
-from event import ClickEvent, TapEvent, EventController, EventRecorder
+from event import ClickEvent, TapEvent, EventController
 from pymouse import PyMouseEvent
 from pykeyboard import PyKeyboardEvent
+from time import time
+
+class EventRecorder:
+
+  def __init__( self ):
+    self.tasks = []
+    self.last = time()
+
+  
+  def record( self, event ):
+    now = time()
+    self.tasks.append( ( now - self.last if self.tasks else 0, event ) )
+    self.last = now
+
+
+  def save( self, handle ):
+    fhandle = open( handle, "w" )
+    for time, event in self.tasks:
+      fhandle.write( ",".join( [ str( time ), event.to_string() ] ) + "\n" )
+    fhandle.close()
+
+  def get_snapshot( self ):
+    return list( self.tasks )
+
 
 class ClickManager( PyMouseEvent ):
 
@@ -59,7 +83,7 @@ SAVE RECORDING = `
           self.control.start()
           self.play = False
         else: 
-          self.control.switch()
+          self.control.disable()
           self.control = EventController( self.control.scheme )
           self.play = True
 
@@ -82,7 +106,7 @@ class GuiTapManager ( PyKeyboardEvent ):
 
   def __init__( self, recorder ):
     PyKeyboardEvent.__init__( self )
-    self.enabled = False
+    self.enabled = True
     self.recorder = recorder
 
   def disable( self ):
@@ -94,3 +118,4 @@ class GuiTapManager ( PyKeyboardEvent ):
   def tap( self, code, char, press ):
     if self.enabled:
       self.recorder.record( TapEvent( char, int( press ) ) )
+

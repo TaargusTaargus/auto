@@ -1,5 +1,5 @@
 from pyautogui import click, keyDown, keyUp, typewrite
-from time import time, sleep
+from time import sleep
 from threading import Thread
 
 class ClickEvent:
@@ -41,6 +41,7 @@ class TapEvent:
     self.motion = motion
 
   def consume( self ):
+    print( "tap: " + self.keycode )
     if self.motion == self.KEY_DOWN:
       keyDown( self.keycode )
     else:
@@ -56,18 +57,21 @@ class EventController ( Thread ):
     Thread.__init__( self )
     self.tasks = tasks
     self.counter = 0
-    self.running = True
+    self.enabled = True
 
 
   def run( self ):
-    while self.running:
+    while self.enabled:
       time, event = self.tasks[ self.counter ]
       sleep( time )
       event.consume()
       self.counter = ( self.counter + 1 ) % len( self.tasks )
 
-  def switch( self ):
-    self.running = not self.running
+  def disable( self ):
+    self.enabled = False
+
+  def enable( self ):
+    self.enabled = True
 
   def load_auto_file( self, handle ): 
     self.tasks = []
@@ -107,27 +111,4 @@ class EventController ( Thread ):
           self.tasks.append( ( 0, TapEvent( "Enter", 1 ) ) )
           self.tasks.append( ( 0, TapEvent( "Enter", 0 ) ) )
           fire = False
-
-
-class EventRecorder:
-
-  def __init__( self ):
-    self.tasks = []
-    self.last = time()
-
-  
-  def record( self, event ):
-    now = time()
-    self.tasks.append( ( now - self.last if self.tasks else 0, event ) )
-    self.last = now
-
-
-  def save( self, handle ):
-    fhandle = open( handle, "w" )
-    for time, event in self.tasks:
-      fhandle.write( ",".join( [ str( time ), event.to_string() ] ) + "\n" )
-    fhandle.close()
-
-  def get_snapshot( self ):
-    return list( self.tasks )
 

@@ -1,5 +1,5 @@
-from event import EventController, EventRecorder
-from manager import ClickManager, GuiTapManager
+from event import EventController
+from manager import ClickManager, EventRecorder, GuiTapManager
 from os.path import expanduser, relpath
 from PyQt4 import QtCore, QtGui
 
@@ -116,7 +116,7 @@ class Presenter( object ):
     if self.isrunning:
 
       if self.recording:
-        self.controller.switch()
+        self.controller.disable()
         self.controller = EventController( self.recorder.tasks )
         self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
       else:
