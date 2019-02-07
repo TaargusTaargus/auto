@@ -135,6 +135,7 @@ class Presenter( object ):
     else:
 
       if self.recording:
+        self.controller.enable()
         self.controller.start()
         self.view.get_status_label().setText( _translate( "Form", "Running " + self.recording + " ...", None ) ) 
       else:

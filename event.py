@@ -41,7 +41,6 @@ class TapEvent:
     self.motion = motion
 
   def consume( self ):
-    print( "tap: " + self.keycode )
     if self.motion == self.KEY_DOWN:
       keyDown( self.keycode )
     else:
@@ -57,7 +56,7 @@ class EventController ( Thread ):
     Thread.__init__( self )
     self.tasks = tasks
     self.counter = 0
-    self.enabled = True
+    self.enabled = False
 
 
   def run( self ):

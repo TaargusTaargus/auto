@@ -30,7 +30,7 @@ class ClickManager( PyMouseEvent ):
 
   def __init__( self, recorder ):
     PyMouseEvent.__init__( self )
-    self.enabled = True
+    self.enabled = False
     self.recorder = recorder
 
   def disable( self ):
@@ -80,6 +80,7 @@ SAVE RECORDING = `
 
       if code == self.PLAY and not press and self.control:
         if self.play:
+          self.control.enable()
           self.control.start()
           self.play = False
         else: 
@@ -106,7 +107,7 @@ class GuiTapManager ( PyKeyboardEvent ):
 
   def __init__( self, recorder ):
     PyKeyboardEvent.__init__( self )
-    self.enabled = True
+    self.enabled = False
     self.recorder = recorder
 
   def disable( self ):
