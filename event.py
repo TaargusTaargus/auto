@@ -1,4 +1,4 @@
-from pyautogui import click, keyDown, keyUp, typewrite
+from pyautogui import click, keyDown, keyUp, moveTo, typewrite
 from time import sleep
 from threading import Thread
 
@@ -13,6 +13,7 @@ class ClickEvent:
     self.button = button
 
   def consume( self ):
+    moveTo( self.x, self.y )
     click( x=self.x, y=self.y, button='right' if self.button == self.MOUSE_RIGHT else 'left' )
 
   def to_string( self ):
