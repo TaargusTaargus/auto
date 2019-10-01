@@ -105,10 +105,12 @@ SAVE RECORDING = `
 
 class GuiTapManager ( PyKeyboardEvent ):
 
-  def __init__( self, recorder ):
+  def __init__( self, recorder, stop_thread, config = { "stop": { "key": "~", "code": 49 } } ):
     PyKeyboardEvent.__init__( self )
+    self.config = config
     self.enabled = False
     self.recorder = recorder
+    self.stop_thread = stop_thread
 
   def disable( self ):
     self.enabled = False
@@ -118,5 +120,9 @@ class GuiTapManager ( PyKeyboardEvent ):
 
   def tap( self, code, char, press ):
     if self.enabled:
-      self.recorder.record( TapEvent( char, int( press ) ) )
+      if code == self.config[ "stop" ][ "code" ]:
+        self.stop_thread.start()
+        self.enabled = False
+      else:
+        self.recorder.record( TapEvent( char, int( press ) ) )
 

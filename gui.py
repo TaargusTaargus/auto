@@ -20,9 +20,9 @@ except AttributeError:
 EMPTY_TEXT = "No recording is loaded."
 HOME_DIRECTORY = expanduser( "~" )
 START_TEXT = "Start"
+STOP_KEY = "~"
 STOP_TEXT = "Stop"
 PLAYBACK_TEXT = "Playing recording ..."
-RECORDING_TEXT = "Recording ..."
 POST_RECORDING_TEXT = "Unsaved recording loaded."
 
 class Ui_Form( object ):
@@ -31,9 +31,9 @@ class Ui_Form( object ):
     form.setObjectName( _fromUtf8( "form" ) )
     form.resize( 372, 126 )
     self.form = form
-    self.startStopButton = QtGui.QPushButton( form )
-    self.startStopButton.setGeometry( QtCore.QRect( 270, 20, 99, 27 ) )
-    self.startStopButton.setObjectName( _fromUtf8( "startStopButton" ) )
+    self.startButton = QtGui.QPushButton( form )
+    self.startButton.setGeometry( QtCore.QRect( 270, 20, 99, 27 ) )
+    self.startButton.setObjectName( _fromUtf8( "startButton" ) )
     self.bottomHorizontalLayoutWidget = QtGui.QWidget( form )
     self.bottomHorizontalLayoutWidget.setGeometry( QtCore.QRect( 0, 59, 371, 61 ) )
     self.bottomHorizontalLayoutWidget.setObjectName( _fromUtf8( "bottomHorizontalLayoutWidget" ) )
@@ -58,7 +58,7 @@ class Ui_Form( object ):
 
   def retranslate_ui( self, Form ):
     Form.setWindowTitle( _translate( "Form", "Auto Man", None ) )
-    self.startStopButton.setText( _translate( "Form", START_TEXT, None ) )
+    self.startButton.setText( _translate( "Form", START_TEXT, None ) )
     self.statusLabel.setText( _translate( "Form", EMPTY_TEXT, None ) )
     self.createNewButton.setText( _translate( "Form", "Create New", None ) )
     self.openButton.setText( _translate( "Form", "Open ...", None ) )
@@ -72,8 +72,8 @@ class Ui_Form( object ):
   def get_save_as_button( self ):
     return self.saveAsButton
 
-  def get_start_stop_button( self ):
-    return self.startStopButton
+  def get_start_button( self ):
+    return self.startButton
 
   def get_open_button( self ):
     return self.openButton
@@ -94,59 +94,67 @@ class Ui_Form( object ):
     return QtGui.QFileDialog.getSaveFileName( self.form, "Save File", HOME_DIRECTORY, "Auto Files (*.auto)" )
 
 
-class Presenter( object ):
+class OnStopCallback( QtCore.QThread ):
+
+  def __init__( self ):
+    QtCore.QThread.__init__( self )
+    self.signal = QtCore.SIGNAL( "SIGNAL" )
+
+  def run( self ):
+    self.emit( self.signal )
+
+class Presenter( QtGui.QWidget ):
 
   def __init__( self, view ):
+    QtGui.QWidget.__init__( self )
     self.controller = EventController()
     self.recorder = EventRecorder()
-    self.click, self.tap = ClickManager( self.recorder ), GuiTapManager( self.recorder )
-    self.isrunning = False
+    self.thread = OnStopCallback()
+    self.click, self.tap = ClickManager( self.recorder ), GuiTapManager( self.recorder, self.thread )
     self.recording = None
     self.view = view
 
-  def init_ui( self ):
+  def init( self ):
+    self.connect( self.thread, self.thread.signal, self.on_stop )
     self.click.start()
     self.tap.start()
     self.view.get_create_new_button().clicked.connect( self.on_create_new_button_click )
     self.view.get_open_button().clicked.connect( self.on_open_button_click )
     self.view.get_save_as_button().clicked.connect( self.on_save_as_button_click )
-    self.view.get_start_stop_button().clicked.connect( self.on_start_stop_button_click )
+    self.view.get_start_button().clicked.connect( self.on_start_button_click )
 
-  def on_start_stop_button_click( self ):
-    if self.isrunning:
-
-      if self.recording:
-        self.controller.disable()
-        self.controller = EventController( self.recorder.tasks )
-        self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
-      else:
-        self.click.disable()
-        self.tap.disable()
-        self.view.get_status_label().setText( _translate( "Form", POST_RECORDING_TEXT, None ) )
-        self.controller = EventController( self.recorder.tasks )
-        self.recording = "Unsaved recording"
-
-      self.view.get_create_new_button().show()
-      self.view.get_open_button().show()
-      self.view.get_save_as_button().show()
-      self.view.get_parent_form().resize( 372, 126 )
-      self.view.get_start_stop_button().setText( _translate( "Form", START_TEXT, None ) )      
-
+  def on_start_button_click( self ):
+    if self.recording:
+      self.controller.enable()
+      self.controller.start()
+      self.view.get_status_label().setText( _translate( "Form", "Running " + self.recording + " ( press " + STOP_KEY + " to stop ) ...", None ) ) 
     else:
+      self.tap.enable()
+      self.click.enable()
+      self.view.get_status_label().setText( _translate( "Form", "Recording ( press " + STOP_KEY + " to stop ) ...", None ) ) 
 
-      if self.recording:
-        self.controller.enable()
-        self.controller.start()
-        self.view.get_status_label().setText( _translate( "Form", "Running " + self.recording + " ...", None ) ) 
-      else:
-        self.tap.enable()
-        self.click.enable()
-        self.view.get_status_label().setText( _translate( "Form", RECORDING_TEXT, None ) ) 
+    self.view.get_parent_form().resize( 372, 58 )
+    self.view.get_start_button().hide()
+    self.view.get_status_label().resize( 350, 31 )
 
-      self.view.get_parent_form().resize( 372, 58 )
-      self.view.get_start_stop_button().setText( _translate( "Form", STOP_TEXT, None ) )
+  def on_stop( self ):
+    if self.recording:
+      self.controller.disable()
+      self.controller = EventController( self.recorder.tasks )
+      self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
+    else:
+      self.click.disable()
+      self.tap.disable()
+      self.view.get_status_label().setText( _translate( "Form", POST_RECORDING_TEXT, None ) )
+      self.controller = EventController( self.recorder.tasks )
+      self.recording = "Unsaved recording"
 
-    self.isrunning = not self.isrunning
+    self.view.get_create_new_button().show()
+    self.view.get_open_button().show()
+    self.view.get_save_as_button().show()
+    self.view.get_start_button().show()
+    self.view.get_parent_form().resize( 372, 126 )
+
 
   def on_create_new_button_click( self ):
     self.recording = None

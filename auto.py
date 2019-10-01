@@ -18,7 +18,7 @@ if __name__ == "__main__":
     ui.setup_ui( form )
 
     presenter = Presenter( ui )
-    presenter.init_ui()
+    presenter.init()
 
     form.show()
     exit( app.exec_() )
