@@ -102,6 +102,7 @@ class OnStopCallback( QtCore.QThread ):
 
   def run( self ):
     self.emit( self.signal )
+    print( "ran" )
 
 class Presenter( QtGui.QWidget ):
 
@@ -147,12 +148,13 @@ class Presenter( QtGui.QWidget ):
       self.tap.disable()
       self.view.get_status_label().setText( _translate( "Form", POST_RECORDING_TEXT, None ) )
       self.controller = EventController( self.recorder.tasks )
-      self.recording = "Unsaved recording"
+      self.recording = "unsaved recording"
 
     self.view.get_create_new_button().show()
     self.view.get_open_button().show()
     self.view.get_save_as_button().show()
     self.view.get_start_button().show()
+    self.view.get_status_label().resize( 249, 31 )
     self.view.get_parent_form().resize( 372, 126 )
 
 
