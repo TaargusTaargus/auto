@@ -14,5 +14,5 @@ else
   if [ "x$pyth" == "x" ]; then
     echo "You do not have Python installed or it is not in your \$PATH"
   fi
-  $pyth auto.py $@ 
+  $pyth auto-shell.py $@ 
 fi
