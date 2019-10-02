@@ -88,7 +88,7 @@ class Ui_Form( object ):
     return self.form
 
   def get_open_dialog( self ):
-    return QtGui.QFileDialog.getOpenFileName( self.form, "Open File", HOME_DIRECTORY, "Auto Files (*.auto)" )
+    return QtGui.QFileDialog.getOpenFileName( self.form, "Open File", HOME_DIRECTORY, "Auto Files (*.auto);;Text Files (*.txt)" )
 
   def get_save_dialog( self ):
     dialog = QtGui.QFileDialog()
@@ -99,7 +99,7 @@ class Ui_Form( object ):
     dialog.setNameFilter( "Auto Files (*.auto)" )
     dialog.setViewMode( QtGui.QFileDialog.Detail )
     dialog.exec()
-    return dialog.selectedFiles()[ -1 ]#QtGui.QFileDialog.getSaveFileName( self.form, "Save File", HOME_DIRECTORY, "Auto Files (*.auto)" )
+    return dialog.selectedFiles()[ -1 ]
 
 
 class OnStopCallback( QtCore.QThread ):
@@ -173,11 +173,19 @@ class Presenter( QtGui.QWidget ):
 
   def on_open_button_click( self ):
     filename = self.view.get_open_dialog()
-    if filename:
+
+    if not filename:
+      return
+
+    extension = filename.split( "." )[ -1 ]
+    if extension == "auto":
       self.controller.load_auto_file( filename )
-      self.recording = relpath( filename ).split( sep )[ -1 ]
-      self.view.get_create_new_button().show()
-      self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
+    elif extension == "txt":
+      self.controller.load_text_file( filename )
+
+    self.recording = relpath( filename ).split( sep )[ -1 ]
+    self.view.get_create_new_button().show()
+    self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
       
   def on_save_as_button_click( self ):
     filename = self.view.get_save_dialog()
