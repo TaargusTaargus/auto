@@ -61,6 +61,9 @@ class EventController ( Thread ):
 
 
   def run( self ):
+    if not len( self.tasks ):
+      return
+
     while self.enabled:
       time, event = self.tasks[ self.counter ]
       sleep( time )

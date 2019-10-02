@@ -1,6 +1,6 @@
 from event import EventController
 from manager import ClickManager, EventRecorder, GuiTapManager
-from os.path import expanduser, relpath
+from os.path import expanduser, relpath, sep
 from PyQt4 import QtCore, QtGui
 
 try:
@@ -91,7 +91,15 @@ class Ui_Form( object ):
     return QtGui.QFileDialog.getOpenFileName( self.form, "Open File", HOME_DIRECTORY, "Auto Files (*.auto)" )
 
   def get_save_dialog( self ):
-    return QtGui.QFileDialog.getSaveFileName( self.form, "Save File", HOME_DIRECTORY, "Auto Files (*.auto)" )
+    dialog = QtGui.QFileDialog()
+    dialog.setAcceptMode( QtGui.QFileDialog.AcceptSave )
+    dialog.setDefaultSuffix( "auto" )
+    dialog.setDirectory( HOME_DIRECTORY )
+    dialog.setFileMode( QtGui.QFileDialog.AnyFile )
+    dialog.setNameFilter( "Auto Files (*.auto)" )
+    dialog.setViewMode( QtGui.QFileDialog.Detail )
+    dialog.exec()
+    return dialog.selectedFiles()[ -1 ]#QtGui.QFileDialog.getSaveFileName( self.form, "Save File", HOME_DIRECTORY, "Auto Files (*.auto)" )
 
 
 class OnStopCallback( QtCore.QThread ):
@@ -102,7 +110,6 @@ class OnStopCallback( QtCore.QThread ):
 
   def run( self ):
     self.emit( self.signal )
-    print( "ran" )
 
 class Presenter( QtGui.QWidget ):
 
@@ -116,7 +123,6 @@ class Presenter( QtGui.QWidget ):
     self.view = view
 
   def init( self ):
-    self.connect( self.thread, self.thread.signal, self.on_stop )
     self.click.start()
     self.tap.start()
     self.view.get_create_new_button().clicked.connect( self.on_create_new_button_click )
@@ -134,6 +140,7 @@ class Presenter( QtGui.QWidget ):
       self.click.enable()
       self.view.get_status_label().setText( _translate( "Form", "Recording ( press " + STOP_KEY + " to stop ) ...", None ) ) 
 
+    self.connect( self.thread, self.thread.signal, self.on_stop )
     self.view.get_parent_form().resize( 372, 58 )
     self.view.get_start_button().hide()
     self.view.get_status_label().resize( 350, 31 )
@@ -168,13 +175,13 @@ class Presenter( QtGui.QWidget ):
     filename = self.view.get_open_dialog()
     if filename:
       self.controller.load_auto_file( filename )
-      self.recording = relpath( filename )
+      self.recording = relpath( filename ).split( sep )[ -1 ]
       self.view.get_create_new_button().show()
       self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
       
   def on_save_as_button_click( self ):
     filename = self.view.get_save_dialog()
     if filename:
-      self.recording = relpath( filename )
+      self.recording = relpath( filename ).split( sep )[ -1 ]
       self.recorder.save( filename )
       self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
