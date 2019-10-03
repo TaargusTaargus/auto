@@ -1,6 +1,7 @@
 from event import ClickEvent, TapEvent, EventController
 from pymouse import PyMouseEvent
 from pykeyboard import PyKeyboardEvent
+from pynput.keyboard import Key, Listener
 from time import time
 
 class EventRecorder:
@@ -102,12 +103,11 @@ SAVE RECORDING = `
         self.snapshot = self.recorder.get_snapshot()
         self.control = EventController( self.snapshot )
 
-
 class GuiTapManager ( PyKeyboardEvent ):
 
-  def __init__( self, recorder, stop_thread, config = { "stop": { "key": "~", "code": 49 } } ):
+  def __init__( self, recorder, stop_thread, control_config ):
     PyKeyboardEvent.__init__( self )
-    self.config = config
+    self.config = control_config
     self.enabled = False
     self.recorder = recorder
     self.stop_thread = stop_thread

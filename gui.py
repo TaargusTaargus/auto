@@ -2,6 +2,7 @@ from event import EventController
 from manager import ClickManager, EventRecorder, GuiTapManager
 from os.path import expanduser, relpath, sep
 from PyQt4 import QtCore, QtGui
+from platform import system
 
 try:
   _fromUtf8 = QtCore.QString.fromUtf8
@@ -25,6 +26,20 @@ STOP_TEXT = "Stop"
 PLAYBACK_TEXT = "Playing recording ..."
 POST_RECORDING_TEXT = "Unsaved recording loaded."
 
+LINUX_CONFIG = {
+  "stop": {
+    "key": "~",
+    "code": 49
+  }
+}
+
+WINDOWS_CONFIG = {
+  "stop": {
+    "key": "~", 
+    "code": 192
+  }
+}
+ 
 class Ui_Form( object ):
 
   def setup_ui( self, form ):
@@ -118,7 +133,7 @@ class Presenter( QtGui.QWidget ):
     self.controller = EventController()
     self.recorder = EventRecorder()
     self.thread = OnStopCallback()
-    self.click, self.tap = ClickManager( self.recorder ), GuiTapManager( self.recorder, self.thread )
+    self.click, self.tap = ClickManager( self.recorder ), GuiTapManager( self.recorder, self.thread, WINDOWS_CONFIG if system() == "Windows" else LINUX_CONFIG )
     self.recording = None
     self.view = view
 
