@@ -1,23 +1,29 @@
-from pyautogui import click, keyDown, keyUp, moveTo, typewrite
+from pynput.mouse import Button, Controller as MouseController
+from pynput.keyboard import Key, KeyCode, Controller as KeyboardController
+from pyautogui import typewrite
 from time import sleep, time
 from threading import Thread
 
 class ClickEvent:
 
+  KEYWORD = "click"
   MOUSE_LEFT = 1
   MOUSE_RIGHT = 2
 
   def __init__( self, x, y, button=1 ):
+    self.button = button
+    self.controller = MouseController()
     self.x = x
     self.y = y
-    self.button = button
 
   def consume( self ):
-    moveTo( self.x, self.y )
-    click( x=self.x, y=self.y, button='right' if self.button == self.MOUSE_RIGHT else 'left' )
+    self.controller.position = ( self.x, self.y )
+    self.controller.move( 0, 0 )
+    self.controller.press( Button.right if self.button == self.MOUSE_RIGHT else Button.left )
+    self.controller.release( Button.right if self.button == self.MOUSE_RIGHT else Button.left )
 
   def to_string( self ):
-    return ",".join( [ "click", str( self.x ), str( self.y ), str( self.button ) ] )
+    return ",".join( [ self.KEYWORD, str( self.x ), str( self.y ), str( self.button ) ] )
 
 
 class StringEvent:
@@ -34,21 +40,28 @@ class StringEvent:
 
 class TapEvent:
 
+  KEYWORD = "tap"
   KEY_DOWN = 1
   KEY_UP = 0
 
   def __init__( self, keycode, motion=0 ):
+    self.controller = KeyboardController()
     self.keycode = keycode
     self.motion = motion
 
   def consume( self ):
     if self.motion == self.KEY_DOWN:
-      keyDown( self.keycode )
+      self.controller.press( self.keycode )
     else:
-      keyUp( self.keycode ) 
+      self.controller.release( self.keycode ) 
 
   def to_string( self ):
-    return ",".join( [ "tap", str( self.keycode ), str( self.motion ) ] )
+    keycode = self.keycode
+    if isinstance( keycode, Key ):
+      keycode = str( keycode )
+    elif isinstance( keycode, KeyCode ):
+      keycode = keycode.char      
+    return ",".join( [ self.KEYWORD, str( keycode ), str( self.motion ) ] )
 
 
 class EventController ( Thread ):
@@ -81,10 +94,23 @@ class EventController ( Thread ):
     fhandle = open( handle, "r" )
     for line in fhandle:
       attr = line.strip().split( "," )
-      if attr[ 1 ] == "click":
+
+      if attr[ 1 ] == ClickEvent.KEYWORD:
         self.tasks.append( ( float( attr[ 0 ] ), ClickEvent( int( attr[ 2 ] ), int( attr[ 3 ] ), int( attr[ 4 ] ) ) ) )
-      else:
-        self.tasks.append( ( float( attr[ 0 ] ), TapEvent( attr[ 2 ], int( attr[ 3 ] ) ) ) )
+      elif attr[ 1 ] == TapEvent.KEYWORD:
+        key = None
+        keys = dict( [ ( str( e ), e ) for e in Key ] )
+        if attr[ 1 ] in keys.keys():  
+          key = keys[ attr[ 1 ] ]
+        else:
+          try:
+            key = KeyCode( attr[ 1 ] )
+          except:
+            key = None
+
+        if key:
+          self.tasks.append( ( float( attr[ 0 ] ), TapEvent( key , int( attr[ 3 ] ) ) ) )
+
     fhandle.close()
 
   def load_text_file( self, handle, size=70, interval=10 ):

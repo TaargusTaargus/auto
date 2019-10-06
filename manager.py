@@ -1,5 +1,5 @@
 from event import EventController, EventRecorder, ClickEvent, TapEvent
-from pynput.keyboard import Listener as KeyboardListener
+from pynput.keyboard import KeyCode, Listener as KeyboardListener
 from pynput.mouse import Button, Listener as MouseListener
 from PyQt4 import QtCore
 
@@ -18,7 +18,6 @@ class GuiClickRecordManager( QtCore.QThread ):
     self.enabled = True
 
   def run( self ):
-    print( "also here" )
     with MouseListener( on_click = self.on_click ) as listener:
       listener.join()
 
@@ -46,20 +45,17 @@ class GuiTapRecordManager( QtCore.QThread ):
     self.enabled = True
 
   def run( self ):
-    print( "here" )
     with KeyboardListener( on_press = self.on_press, on_release = self.on_release ) as listener:
       listener.join()
 
   def on_press( self, key ):
-    key_char = str( key ).replace( "'", "" )
-    if key_char == self.config[ "stop" ]:
+    if isinstance( key, KeyCode ) and key.char == self.config[ "stop" ]:
       self.emit( self.signal )
       self.enabled = False
 
     if self.enabled:
-      self.recorder.record( TapEvent( key_char, 1 ) )
+      self.recorder.record( TapEvent( key, 1 ) )
  
   def on_release( self, key ):
-    key_char = str( key ).replace( "'", "" )
     if self.enabled:
       self.recorder.record( TapEvent( key, 0 ) )

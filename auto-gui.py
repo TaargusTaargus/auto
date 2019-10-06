@@ -1,9 +1,6 @@
-from event import EventController
-from manager import ShellTapManager
 from gui import Presenter, Ui_Form
 from PyQt4 import QtGui
 from sys import argv, exit
-from pynput.keyboard import Listener
 
 def main():
   app = QtGui.QApplication( argv )
