@@ -100,11 +100,11 @@ class EventController ( Thread ):
       elif attr[ 1 ] == TapEvent.KEYWORD:
         key = None
         keys = dict( [ ( str( e ), e ) for e in Key ] )
-        if attr[ 1 ] in keys.keys():  
-          key = keys[ attr[ 1 ] ]
+        if attr[ 2 ] in keys.keys():
+          key = keys[ attr[ 2 ] ]
         else:
           try:
-            key = KeyCode( attr[ 1 ] )
+            key = KeyCode.from_char( attr[ 2 ] )
           except:
             key = None
 
@@ -148,6 +148,9 @@ class EventRecorder:
     self.tasks = []
     self.last = time()
 
+  def clear( self ):
+    self.tasks = []
+    self.last = time()
   
   def record( self, event ):
     now = time()

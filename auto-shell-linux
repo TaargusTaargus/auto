@@ -1,0 +1,18 @@
+#!/bin/bash
+
+SERVICE=$(basename $0)
+
+if [ $# -eq 0 ]; then
+  echo "
+The $SERVICE service allows you to record, save, and load keyboard and mouse macros.
+To run the $SERVICE service simply type: '$SERVICE start' from the command line, which will
+run the $SERVICE service in the background. To kill $SERVICE double tap the escape 
+button.
+"
+else
+  pyth=$(which python3)
+  if [ "x$pyth" == "x" ]; then
+    echo "You do not have Python installed or it is not in your \$PATH"
+  fi
+  $pyth auto-shell.py $@ 
+fi

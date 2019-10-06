@@ -174,6 +174,7 @@ class Presenter( QtGui.QWidget ):
 
   def on_create_new_button_click( self ):
     self.recording = None
+    self.recorder.clear()
     self.view.get_create_new_button().hide()
     self.view.get_save_as_button().hide()
     self.view.get_status_label().setText( _translate( "Form", EMPTY_TEXT, None ) )
