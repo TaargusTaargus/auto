@@ -1,5 +1,5 @@
 from event import EventController
-from manager import ClickManager, EventRecorder, GuiTapManager
+from manager import EventRecorder, GuiClickRecordManager, GuiTapRecordManager
 from os.path import expanduser, relpath, sep
 from PyQt4 import QtCore, QtGui
 from platform import system
@@ -26,18 +26,8 @@ STOP_TEXT = "Stop"
 PLAYBACK_TEXT = "Playing recording ..."
 POST_RECORDING_TEXT = "Unsaved recording loaded."
 
-LINUX_CONFIG = {
-  "stop": {
-    "key": "~",
-    "code": 49
-  }
-}
-
-WINDOWS_CONFIG = {
-  "stop": {
-    "key": "~", 
-    "code": 192
-  }
+CONTROL_CONFIG = {
+  "stop": "`"
 }
  
 class Ui_Form( object ):
@@ -126,20 +116,22 @@ class OnStopCallback( QtCore.QThread ):
   def run( self ):
     self.emit( self.signal )
 
+  def stop_thread( self ):
+    self.emit( self.signal )
+
 class Presenter( QtGui.QWidget ):
 
   def __init__( self, view ):
     QtGui.QWidget.__init__( self )
     self.controller = EventController()
     self.recorder = EventRecorder()
-    self.thread = OnStopCallback()
-    self.click, self.tap = ClickManager( self.recorder ), GuiTapManager( self.recorder, self.thread, WINDOWS_CONFIG if system() == "Windows" else LINUX_CONFIG )
+    self.click_manager, self.tap_manager = GuiClickRecordManager( self.recorder ), GuiTapRecordManager( self.recorder, CONTROL_CONFIG )
     self.recording = None
     self.view = view
 
   def init( self ):
-    self.click.start()
-    self.tap.start()
+    self.click_manager.start()
+    self.tap_manager.start()
     self.view.get_create_new_button().clicked.connect( self.on_create_new_button_click )
     self.view.get_open_button().clicked.connect( self.on_open_button_click )
     self.view.get_save_as_button().clicked.connect( self.on_save_as_button_click )
@@ -151,11 +143,11 @@ class Presenter( QtGui.QWidget ):
       self.controller.start()
       self.view.get_status_label().setText( _translate( "Form", "Running " + self.recording + " ( press " + STOP_KEY + " to stop ) ...", None ) ) 
     else:
-      self.tap.enable()
-      self.click.enable()
+      self.click_manager.enable()
+      self.tap_manager.enable()
       self.view.get_status_label().setText( _translate( "Form", "Recording ( press " + STOP_KEY + " to stop ) ...", None ) ) 
 
-    self.connect( self.thread, self.thread.signal, self.on_stop )
+    self.connect( self.tap_manager, self.tap_manager.signal, self.on_stop )
     self.view.get_parent_form().resize( 372, 58 )
     self.view.get_start_button().hide()
     self.view.get_status_label().resize( 350, 31 )
@@ -166,8 +158,8 @@ class Presenter( QtGui.QWidget ):
       self.controller = EventController( self.recorder.tasks )
       self.view.get_status_label().setText( _translate( "Form", self.recording + " loaded.", None ) )
     else:
-      self.click.disable()
-      self.tap.disable()
+      self.click_manager.disable()
+      self.tap_manager.disable()
       self.view.get_status_label().setText( _translate( "Form", POST_RECORDING_TEXT, None ) )
       self.controller = EventController( self.recorder.tasks )
       self.recording = "unsaved recording"

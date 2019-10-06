@@ -1,5 +1,5 @@
 from pyautogui import click, keyDown, keyUp, moveTo, typewrite
-from time import sleep
+from time import sleep, time
 from threading import Thread
 
 class ClickEvent:
@@ -115,3 +115,25 @@ class EventController ( Thread ):
           self.tasks.append( ( 0, TapEvent( "Enter", 0 ) ) )
           fire = False
 
+
+class EventRecorder:
+
+  def __init__( self ):
+    self.tasks = []
+    self.last = time()
+
+  
+  def record( self, event ):
+    now = time()
+    self.tasks.append( ( now - self.last if self.tasks else 0, event ) )
+    self.last = now
+
+
+  def save( self, handle ):
+    fhandle = open( handle, "w" )
+    for time, event in self.tasks:
+      fhandle.write( ",".join( [ str( time ), event.to_string() ] ) + "\n" )
+    fhandle.close()
+
+  def get_snapshot( self ):
+    return list( self.tasks )

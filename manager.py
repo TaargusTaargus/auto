@@ -1,36 +1,13 @@
-from event import ClickEvent, TapEvent, EventController
-from pymouse import PyMouseEvent
-from pykeyboard import PyKeyboardEvent
-from pynput.keyboard import Key, Listener
-from time import time
-
-class EventRecorder:
-
-  def __init__( self ):
-    self.tasks = []
-    self.last = time()
-
-  
-  def record( self, event ):
-    now = time()
-    self.tasks.append( ( now - self.last if self.tasks else 0, event ) )
-    self.last = now
+from event import EventController, EventRecorder, ClickEvent, TapEvent
+from pynput.keyboard import Listener as KeyboardListener
+from pynput.mouse import Button, Listener as MouseListener
+from PyQt4 import QtCore
 
 
-  def save( self, handle ):
-    fhandle = open( handle, "w" )
-    for time, event in self.tasks:
-      fhandle.write( ",".join( [ str( time ), event.to_string() ] ) + "\n" )
-    fhandle.close()
-
-  def get_snapshot( self ):
-    return list( self.tasks )
-
-
-class ClickManager( PyMouseEvent ):
+class GuiClickRecordManager( QtCore.QThread ):
 
   def __init__( self, recorder ):
-    PyMouseEvent.__init__( self )
+    QtCore.QThread.__init__( self )
     self.enabled = False
     self.recorder = recorder
 
@@ -40,77 +17,27 @@ class ClickManager( PyMouseEvent ):
   def enable( self ):
     self.enabled = True
 
-  def click( self, x, y, button, pressed ):    
-    if pressed and self.enabled:
-      self.recorder.record( ClickEvent( x, y, button ) )
+  def run( self ):
+    print( "also here" )
+    with MouseListener( on_click = self.on_click ) as listener:
+      listener.join()
+
+  def on_click( self, x, y, button, pressed ):
+    if self.enabled and pressed:
+      if button == Button.left:
+        self.recorder.record( ClickEvent( x, y, 1 ) )
+      elif button == Button.right:
+        self.recorder.record( ClickEvent( x, y, 2 ) )
 
 
-class ShellTapManager ( PyKeyboardEvent ):
- 
-  LOAD = 23 ## tab
-  SAVE = 49 ## `
-  RECORD = 50 ## R-Shift
-  PLAY = 62 ## L-Shift 
- 
-  HELP_SHELL_TEXT = '''
-START/STOP RECORDING = R-Shift
-PLAYBACK RECORDING = L-Shift
-LOAD RECORDING = Tab
-SAVE RECORDING = `
-'''
+class GuiTapRecordManager( QtCore.QThread ):
 
-
-  def __init__( self ):
-    PyKeyboardEvent.__init__( self )
-    self.record = False
-    self.play = True
-    self.snapshot = None
-    self.mouse = None
-    self.control = None
-    self.recorder = EventRecorder()
-
-
-  def tap( self, code, char, press ):
-    if not self.record:
-      if code == self.SAVE and not press:
-        self.recorder.save( "recording.auto" )
-
-      if code == self.LOAD and not press:
-        self.control = EventController()
-        self.control.load_auto_file( "recording.auto" )
-
-      if code == self.PLAY and not press and self.control:
-        if self.play:
-          self.control.enable()
-          self.control.start()
-          self.play = False
-        else: 
-          self.control.disable()
-          self.control = EventController( self.control.scheme )
-          self.play = True
-
-    else:
-      self.recorder.record( TapEvent( char, int( press ) ) ) 
-
-
-    if code == self.RECORD and not press:
-      self.record = not self.record
-      if self.record:
-        self.mouse = ClickManager( self.recorder )
-        self.mouse.start()
-        self.mouse.enable()
-      else:
-        self.snapshot = self.recorder.get_snapshot()
-        self.control = EventController( self.snapshot )
-
-class GuiTapManager ( PyKeyboardEvent ):
-
-  def __init__( self, recorder, stop_thread, control_config ):
-    PyKeyboardEvent.__init__( self )
+  def __init__( self, recorder, control_config ):
+    QtCore.QThread.__init__( self )
     self.config = control_config
     self.enabled = False
     self.recorder = recorder
-    self.stop_thread = stop_thread
+    self.signal = QtCore.SIGNAL( "SIGNAL" )
 
   def disable( self ):
     self.enabled = False
@@ -118,11 +45,21 @@ class GuiTapManager ( PyKeyboardEvent ):
   def enable( self ):
     self.enabled = True
 
-  def tap( self, code, char, press ):
-    if code == self.config[ "stop" ][ "code" ]:
-        self.stop_thread.start()
-        self.enabled = False
-    
-    if self.enabled:
-      self.recorder.record( TapEvent( char, int( press ) ) )
+  def run( self ):
+    print( "here" )
+    with KeyboardListener( on_press = self.on_press, on_release = self.on_release ) as listener:
+      listener.join()
 
+  def on_press( self, key ):
+    key_char = str( key ).replace( "'", "" )
+    if key_char == self.config[ "stop" ]:
+      self.emit( self.signal )
+      self.enabled = False
+
+    if self.enabled:
+      self.recorder.record( TapEvent( key_char, 1 ) )
+ 
+  def on_release( self, key ):
+    key_char = str( key ).replace( "'", "" )
+    if self.enabled:
+      self.recorder.record( TapEvent( key, 0 ) )
