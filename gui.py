@@ -63,6 +63,7 @@ class Ui_Form( object ):
 
   def retranslate_ui( self, Form ):
     Form.setWindowTitle( _translate( "Form", "Auto Man", None ) )
+    Form.setWindowIcon( QtGui.QIcon( "task-icon.ico" ) )
     self.startButton.setText( _translate( "Form", START_TEXT, None ) )
     self.statusLabel.setText( _translate( "Form", EMPTY_TEXT, None ) )
     self.createNewButton.setText( _translate( "Form", "Create New", None ) )
