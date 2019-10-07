@@ -29,10 +29,14 @@ class ClickEvent:
 class StringEvent:
 
   def __init__( self, string ):
+    self.controller = KeyboardController()
     self.string = string
 
   def consume( self ):
-    typewrite( self.string )
+    for char in self.string:
+      keycode = KeyCode.from_char( char )
+      self.controller.press( keycode )
+      self.controller.release( keycode )
 
   def to_string( self ):
     return self.string
@@ -113,33 +117,28 @@ class EventController ( Thread ):
 
     fhandle.close()
 
-  def load_text_file( self, handle, size=70, interval=10 ):
+  def load_text_file( self, handle, size=70, interval=6 ):
     self.tasks = []
     string = ""
-    tmp = ""
-    fire = False
+    flush = False
     with open( handle ) as infile:
       for line in infile:
         if not line.strip():
-          tmp = string
-          string = ""
-          fire = True
+          flush = True
 
-        string = string + line.strip()
-        if len( string ) > 70:
-          tmp = string[ :70 ]
-          if string[ 69 ] != " " and string[ 70 ] != " ":
-            tmp = " ".join( string.split( " " )[ :-1 ] )
-            string = string[ len( tmp ): ]
+        words = line.strip().split( " " )
+        string = words.pop( 0 )
+        for word in words:
+          if len( string + " " + word ) < size:
+            string = string + " " + word
           else:
-            string = string[ 70: ]
-          fire = True
- 
-        if fire:
-          self.tasks.append( ( interval, StringEvent( tmp ) ) )
-          self.tasks.append( ( 0, TapEvent( "Enter", 1 ) ) )
-          self.tasks.append( ( 0, TapEvent( "Enter", 0 ) ) )
-          fire = False
+            flush = True
+
+        if flush:
+          self.tasks.append( ( interval, StringEvent( string ) ) )
+          self.tasks.append( ( 0, TapEvent( Key.enter, 1 ) ) )
+          self.tasks.append( ( 0, TapEvent( Key.enter, 0 ) ) )
+          string = ""
 
 
 class EventRecorder:
