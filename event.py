@@ -12,15 +12,14 @@ class ClickEvent:
 
   def __init__( self, x, y, button=1 ):
     self.button = button
-    self.controller = MouseController()
     self.x = x
     self.y = y
 
-  def consume( self ):
-    self.controller.position = ( self.x, self.y )
-    self.controller.move( 0, 0 )
-    self.controller.press( Button.right if self.button == self.MOUSE_RIGHT else Button.left )
-    self.controller.release( Button.right if self.button == self.MOUSE_RIGHT else Button.left )
+  def consume( self, controller ):
+    controller.position = ( self.x, self.y )
+    controller.move( 0, 0 )
+    controller.press( Button.right if self.button == self.MOUSE_RIGHT else Button.left )
+    controller.release( Button.right if self.button == self.MOUSE_RIGHT else Button.left )
 
   def to_string( self ):
     return ",".join( [ self.KEYWORD, str( self.x ), str( self.y ), str( self.button ) ] )
@@ -29,14 +28,13 @@ class ClickEvent:
 class StringEvent:
 
   def __init__( self, string ):
-    self.controller = KeyboardController()
     self.string = string
 
-  def consume( self ):
+  def consume( self, controller ):
     for char in self.string:
       keycode = KeyCode.from_char( char )
-      self.controller.press( keycode )
-      self.controller.release( keycode )
+      controller.press( keycode )
+      controller.release( keycode )
 
   def to_string( self ):
     return self.string
@@ -49,15 +47,14 @@ class TapEvent:
   KEY_UP = 0
 
   def __init__( self, keycode, motion=0 ):
-    self.controller = KeyboardController()
     self.keycode = keycode
     self.motion = motion
 
-  def consume( self ):
+  def consume( self, controller ):
     if self.motion == self.KEY_DOWN:
-      self.controller.press( self.keycode )
+      controller.press( self.keycode )
     else:
-      self.controller.release( self.keycode ) 
+      controller.release( self.keycode ) 
 
   def to_string( self ):
     keycode = self.keycode
@@ -81,10 +78,16 @@ class EventController ( Thread ):
     if not len( self.tasks ):
       return
 
+    keyboard = KeyboardController()
+    mouse = MouseController()
+
     while self.enabled:
       time, event = self.tasks[ self.counter ]
       sleep( time )
-      event.consume()
+      if isinstance( event, ClickEvent ):
+        event.consume( mouse )
+      elif isinstance( event, TapEvent ) or isinstance( event, StringEvent ):
+        event.consume( keyboard )
       self.counter = ( self.counter + 1 ) % len( self.tasks )
 
   def disable( self ):
